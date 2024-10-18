@@ -20,7 +20,8 @@ public class FieldSet extends Field{
     public void setShip(Ship ship) {
         shipsPos.put(ship.getID(), selectedShipTiles);
         shipsIsHorizontal.put(ship.getID(), ship.getIshorizontal());
-        shipsImagesPos.put(ship.getID(), selectedTile);
+        int[] selectedTilePos = {selectedTile.getI(), selectedTile.getJ()};
+        shipsImagesPos.put(ship.getID(), selectedTilePos);
         drawWarships();
         selectedTile = null;
     }

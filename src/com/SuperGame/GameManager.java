@@ -15,7 +15,7 @@ public class GameManager {
     
     public static Map<Integer, int[][]> shipsPosCurrent = new HashMap<>();
     public static Map<Integer, Boolean> shipsIsHorizontalCurrent = new HashMap<>();
-    public static Map<Integer, Tile> shipsImagesPosCurrent = new HashMap<>();
+    public static Map<Integer, int[]> shipsImagesPosCurrent = new HashMap<>();
     
     // Конструктор приватный для реализации паттерна Singleton
     private GameManager() {

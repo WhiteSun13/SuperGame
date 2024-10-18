@@ -3,6 +3,7 @@ package com.SuperGame.Scenes;
 import com.SuperGame.*;
 import com.SuperGame.Objects.Field;
 import com.SuperGame.Objects.FieldSet;
+import com.SuperGame.Objects.RandomShips;
 import com.SuperGame.Objects.Ship;
 import com.SuperGame.Utils.ResourceLoader;
 import com.SuperGame.Utils.SceneManager;
@@ -37,6 +38,30 @@ public class GamePanel extends JPanel implements KeyListener, ActionListener, Mo
         tim.start();
         
         backgroundImage = ResourceLoader.loadImageAsURL("/images/Ocean.png");
+        
+     // Инициализация кнопки "Сброс"
+        JButton random_btn = new AnimatedButton("Cлучайно", 1089, 240, 245, 100);
+        
+        random_btn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+            	RandomShips randomField = new RandomShips();
+            	randomField.placeShips();
+            	
+            	field.fullCleanField();
+            	field.loadField(randomField.shipsPos, randomField.shipsIsHorizontal, randomField.shipsImagesPos);
+            	
+            	for (int i = 0; i<10; i++) {
+                    ships[i].seted = false;
+                    int[] tPos = randomField.shipsImagesPos.get(i+1);
+                    ships[i].setIshorizontal(randomField.shipsIsHorizontal.get(i+1));
+                    ships[i].setPosition(field.tiles[tPos[0]][tPos[1]].getX() + 32, field.tiles[tPos[0]][tPos[1]].getY() + 32);
+                    ships[i].seted = true;
+            	}
+            }
+          });
+        
+        add(random_btn);
         
      // Инициализация кнопки "Сброс"
         JButton reset_btn = new AnimatedButton("Сброс", 1089, 350, 245, 100);

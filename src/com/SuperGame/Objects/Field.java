@@ -13,7 +13,7 @@ public class Field {
     
     public Map<Integer, int[][]> shipsPos = new HashMap<>();
     public Map<Integer, Boolean> shipsIsHorizontal = new HashMap<>();
-    public Map<Integer, Tile> shipsImagesPos = new HashMap<>();
+    public Map<Integer, int[]> shipsImagesPos = new HashMap<>();
 
     public Field(int x, int y) {
         this(x, y, 1.0);
@@ -50,6 +50,13 @@ public class Field {
     	GameManager.shipsPosCurrent = shipsPos;
     	GameManager.shipsIsHorizontalCurrent = shipsIsHorizontal;
     	GameManager.shipsImagesPosCurrent = shipsImagesPos;
+    }
+    
+    public void loadField(Map<Integer, int[][]> Pos, Map<Integer, Boolean> IsHorizontal, Map<Integer, int[]> ImagesPos) {
+    	shipsIsHorizontal = IsHorizontal;
+    	shipsPos = Pos;
+    	shipsImagesPos = ImagesPos;
+    	drawWarships();
     }
     
     public void loadField() {

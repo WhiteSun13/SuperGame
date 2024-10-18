@@ -29,8 +29,8 @@ public class FieldPlay extends Field{
 		
 			// Инициализация кораблей
 			for (int i = 0; i < 10; i++) {
-				Tile importTile = shipsImagesPos.get(i+1);
-				Tile localTile = tiles[importTile.getI()][importTile.getJ()];
+				int[] importTile = shipsImagesPos.get(i+1);
+				Tile localTile = tiles[importTile[0]][importTile[1]];
 				ships[i] = new Ship(0, 0, i+1, scale);
 				ships[i].setIshorizontal(shipsIsHorizontal.get(i+1));
 				ships[i].setPosition((int)(localTile.getX() + 32 * scale), (int)(localTile.getY() + 32 * scale));
