@@ -70,8 +70,8 @@ public class Field {
         switch (status) {
         	case HOVER: return "/images/tiles/tile_cyan.png";
             case MISS: return "/images/tiles/tile_blue.png";
-            case HIT: return "/images/tiles/tile_orange.png";
-            case DEAD: return "/images/tiles/tile_lightRed.png";
+            case HIT: return "/images/tiles/tile_red.png";// "/images/tiles/tile_lightRed.png";
+            case DEAD: return "/images/tiles/tile_orange.png";
             case ALLOW: return "/images/tiles/tile_green.png";
             case SHIP_SET: return "/images/tiles/tile_cyan.png";
             case BLOCK: return "/images/tiles/tile_red.png";

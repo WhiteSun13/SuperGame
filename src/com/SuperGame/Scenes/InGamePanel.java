@@ -1,11 +1,15 @@
 package com.SuperGame.Scenes;
 
+import com.SuperGame.AnimatedButton;
+import com.SuperGame.GameManager;
 import com.SuperGame.Objects.AI;
 import com.SuperGame.Objects.FieldPlay;
 import com.SuperGame.Utils.ResourceLoader;
 import com.SuperGame.Utils.SoundManager;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -15,7 +19,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -38,7 +47,8 @@ public class InGamePanel extends JPanel implements KeyListener, ActionListener, 
 	    SoundManager.playMusic("/music/Sea.wav", true);
 	    
 	    enemyField = new FieldPlay(30, 30, false);
-	    playerField = new FieldPlay(686, 30, true, 0.5);
+	    playerField = new FieldPlay(686, 30, true, 1);
+	    GameManager.addGameEventListener(playerField);
 	    
 	    this.playWithAI = playWithAI;
 	    if (playWithAI) {
@@ -68,7 +78,41 @@ public class InGamePanel extends JPanel implements KeyListener, ActionListener, 
         // Отрисовка поля 
         playerField.draw(g);
         enemyField.draw(g);
+        
+        g.setColor(new Color(0, 0, 0, 127));
+        g.fillRect(0, 0, getWidth(), getHeight());
     }
+	
+	public void endGame(boolean isWin) {
+		JLabel resultLabel = new JLabel();
+		resultLabel.setForeground(Color.WHITE);
+		resultLabel.setHorizontalTextPosition(JLabel.CENTER);
+	    
+	    // Загружаем шрифт из пакета
+	    try {
+	        // Убедись, что путь к файлу корректный
+	        Font customFont = Font.createFont(Font.TRUETYPE_FONT, ResourceLoader.loadAsURL("/fonts/RussoOne-Regular.ttf").openStream());
+	        customFont = customFont.deriveFont(48f); // Устанавливаем размер шрифта
+	        
+	        resultLabel.setFont(customFont); // Применяем шрифт к метке
+	    } catch (FontFormatException | IOException e) {
+	        e.printStackTrace();
+	    }
+
+	    if (isWin) {
+	        resultLabel.setText("Победа!");
+	    } else {
+	        resultLabel.setText("Поражение!");
+	    }
+	    
+	    resultLabel.setBounds(586, 200, 400, 100); // Устанавливаем позицию и размер
+	    add(resultLabel);
+		JButton playAgain_btn = new AnimatedButton("Играть снова", 486, 400, 400, 100);
+        add(playAgain_btn);
+        JButton exitToMainMenu_btn = new AnimatedButton("Выйти в меню", 486, 510, 400, 100);
+        add(exitToMainMenu_btn);
+		
+	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
@@ -78,7 +122,7 @@ public class InGamePanel extends JPanel implements KeyListener, ActionListener, 
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		enemyField.hover(e.getX(), e.getY());
+		if (GameManager.isTurn) enemyField.hover(e.getX(), e.getY());
 		
 	}
 
@@ -89,8 +133,32 @@ public class InGamePanel extends JPanel implements KeyListener, ActionListener, 
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		enemyField.Hit();
-		
+		if (GameManager.isTurn) {
+			int[] tilePos = enemyField.getSelctedTilePosition();
+			if (tilePos == null) return;
+			
+			Object[] positionInfo = ai.checkPosition(tilePos);
+			if(playWithAI) {
+				if ((boolean) positionInfo[0]){
+					enemyField.HitOrMiss(tilePos, true);
+					if ((boolean) positionInfo[1]) {
+						enemyField.addSunkShip((int) positionInfo[2], (int[][]) positionInfo[3], (boolean) positionInfo[4], (int[]) positionInfo[5]);
+					}
+				} else {
+					enemyField.HitOrMiss(tilePos, false);
+					GameManager.isTurn = false;
+					ai.giveTurn();
+				}
+			}
+			
+			System.out.println(enemyField.getSunkShips().size());
+			
+			if (playerField.getSunkShips().size() == 10) {
+				endGame(false);
+			} else if (enemyField.getSunkShips().size() == 10) {
+				endGame(true);
+			}
+		}
 	}
 
 	@Override

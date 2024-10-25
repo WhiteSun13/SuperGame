@@ -9,11 +9,9 @@ import com.SuperGame.Utils.ResourceLoader;
 
 public class Ship {
     private int id; // id Корабля
-    
-    private int x, y, type; // x y и размер корабля 
+    private int x, y, type; // x y и размер корабля
     private int temp_x, temp_y; // Предыдущее положение
     private int init_x, init_y; // Начальное положение 
-    
     private int w, h; // ширина и высота
     private boolean ishorizontal = true; // Находится ли сейчас корабль в горизонтальном положении
     private Image image;
@@ -60,11 +58,22 @@ public class Ship {
         this.scale = scale;
         updateDimensions();
     }
-    
-    // Обновление размеров с учётом масштаба
+
+    // Обновление размеров с учётом масштаба и ориентации
     private void updateDimensions() {
-        this.w = (int) (image.getWidth(null) * scale);
-        this.h = (int) (image.getHeight(null) * scale);
+        if (ishorizontal) {
+            this.w = (int) (image.getWidth(null) * scale);
+            this.h = (int) (image.getHeight(null) * scale);
+        } else {
+            this.w = (int) (image.getHeight(null) * scale);
+            this.h = (int) (image.getWidth(null) * scale);
+        }
+    }
+
+    // Метод для замены изображения корабля
+    public void setImage() {
+        this.image = ResourceLoader.loadImageAsURL(String.format("/images/ships/shipDead%s.png", type));
+        updateDimensions(); // Обновляем размеры с учётом нового изображения и масштаба
     }
 
     // Узнать номер корабля
@@ -136,15 +145,8 @@ public class Ship {
         ishorizontal = !ishorizontal;
 
         // Обновляем размеры корабля с учетом поворота и масштаба
-        if (ishorizontal) {
-            this.w = (int) (image.getWidth(null) * scale);
-            this.h = (int) (image.getHeight(null) * scale);
-        } else {
-            this.w = (int) (image.getHeight(null) * scale);
-            this.h = (int) (image.getWidth(null) * scale);
-        }
+        updateDimensions();
     }
-
 
     private Image getRotatedImage() {
         int width = image.getWidth(null);
