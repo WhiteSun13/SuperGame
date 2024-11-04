@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 import com.SuperGame.Scenes.StartMenuPanel;
 import com.SuperGame.Utils.ResourceLoader;
 import com.SuperGame.Utils.SceneManager;
-import com.SuperGame.Utils.SoundManager;
 
 
 public class GameWindow extends JFrame {
@@ -79,4 +78,3 @@ public class GameWindow extends JFrame {
         window.setVisible(true);
     }
 }
-

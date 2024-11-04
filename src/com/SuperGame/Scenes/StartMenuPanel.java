@@ -37,8 +37,8 @@ public class StartMenuPanel extends JPanel implements ActionListener {
     private JButton player2Server_btn;
     private JButton player2Client_btn;
     private JButton backToFirstMenu_btn;
-    private JTextField nickname_tf;
-	private boolean drawBox = false;
+
+    private boolean drawBox = false;
 
     public StartMenuPanel() {
         setLayout(null);
@@ -89,10 +89,6 @@ public class StartMenuPanel extends JPanel implements ActionListener {
         backToFirstMenu_btn = new AnimatedButton("Назад", group2X + 270, 420, 400, 100);
         backToFirstMenu_btn.addActionListener(e -> {SoundManager.playSound("/sounds/ExitMenu.wav"); switchToGroup1();});
         add(backToFirstMenu_btn);
-        
-        nickname_tf = new JTextField("Имя");
-        nickname_tf.setBounds(group2X + 721, 430, 360, 80);
-        add(nickname_tf);
         
         player2Server_btn.addActionListener(e -> {
         	setVisibleGroup2(false);
@@ -178,7 +174,6 @@ public class StartMenuPanel extends JPanel implements ActionListener {
     	player1_btn.setVisible(b);
     	player2Server_btn.setVisible(b);
     	player2Client_btn.setVisible(b);
-    	nickname_tf.setVisible(b);
     }
 
     private void switchToGroup2() {
@@ -216,7 +211,6 @@ public class StartMenuPanel extends JPanel implements ActionListener {
         player2Server_btn.setLocation(group2X + 701, 166);
         player2Client_btn.setLocation(group2X + 701, 297);
         backToFirstMenu_btn.setLocation(group2X + 270, 420);
-        nickname_tf.setLocation(group2X + 701, 420);
         
         if (drawBox) g.fillRect(36, 36, getWidth() - getWidth() / 4, getHeight() - getHeight() / 2);
     }

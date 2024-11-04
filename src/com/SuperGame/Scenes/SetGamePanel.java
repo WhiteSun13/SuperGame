@@ -1,7 +1,6 @@
 package com.SuperGame.Scenes;
 
 import com.SuperGame.*;
-import com.SuperGame.Objects.Field;
 import com.SuperGame.Objects.FieldSet;
 import com.SuperGame.Objects.RandomShips;
 import com.SuperGame.Objects.Ship;

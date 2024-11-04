@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.util.ArrayList;
 
 import com.SuperGame.GameEventListener;
-import com.SuperGame.GameManager;
 import com.SuperGame.GameManager.TileState;
 import com.SuperGame.Utils.SoundManager;
 

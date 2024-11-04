@@ -2,12 +2,10 @@ package com.SuperGame;
 
 import javax.swing.*;
 
-import com.SuperGame.Utils.ResourceLoader;
 import com.SuperGame.Utils.SoundManager;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 
 
 public class AnimatedButton extends JButton {
