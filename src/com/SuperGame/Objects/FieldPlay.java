@@ -115,7 +115,6 @@ public class FieldPlay extends Field implements GameEventListener {
 
 	        if (isSunk) {
 	            ships[shipKey-1].setImage();
-	            System.out.println("Ship " + shipKey + " is sunk.");
 	            sunkShips.add(shipKey);  // Добавляем потопленный корабль в список
 	        }
 	    }

@@ -5,23 +5,27 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.SuperGame.Scenes.InGamePanel;
+
 public class GameManager {
     private static GameManager instance;
-    private GameState currentState;
+    public static boolean isEnemyReady = false;
+    public static boolean isServer = false;
+    public static boolean playWithAI = false;
 
     public static Map<Integer, int[][]> shipsPosCurrent = new HashMap<>();
     public static Map<Integer, Boolean> shipsIsHorizontalCurrent = new HashMap<>();
     public static Map<Integer, int[]> shipsImagesPosCurrent = new HashMap<>();
 
-    public static boolean isTurn = true;
-    public static ArrayList<int[]> missed = new ArrayList();
-    public static ArrayList<int[]> hited = new ArrayList();
+    public static boolean isTurn = false;
+    public static ArrayList<int[]> missed = new ArrayList<int[]>();
+    public static ArrayList<int[]> hited = new ArrayList<int[]>();
+    public static InGamePanel GamePanel;
     
     // Список слушателей событий
     private static ArrayList<GameEventListener> listeners = new ArrayList<>();
 
     private GameManager() {
-        currentState = GameState.MAIN_MENU;
     }
 
     public static GameManager getInstance() {
@@ -31,15 +35,21 @@ public class GameManager {
         return instance;
     }
 
-    public enum GameState {
-        MAIN_MENU,
-        PLAYING,
-        PAUSED,
-        GAME_OVER
-    }
+//    public enum GameState {
+//        MAIN_MENU,
+//        PLAYING,
+//        SETING
+//    }
 
     public enum TileState {
-        EMPTY, MISS, HIT, DEAD, ALLOW, SHIP_SET, BLOCK, HOVER
+        EMPTY,		// пустой
+        MISS,		// мимо
+        HIT,		// попал
+        DEAD,		// убил
+        ALLOW,		// можно разместить корабль (перед игрой)
+    	SHIP_SET,	// занят / установлен корабль
+        BLOCK, 		// нельзя ставить корабль (перед игрой)
+        HOVER 		// выбрана клетка (во время игры)
     }
 
     // Добавление слушателя
@@ -57,6 +67,11 @@ public class GameManager {
         for (GameEventListener listener : listeners) {
             listener.onPositionChecked(tilePos, isHit);  // Уведомление слушателей
         }
+    }
+    
+    public static void newGame() {
+    	missed = new ArrayList<int[]>();
+        hited = new ArrayList<int[]>();
     }
     
     public static Object[] checkPosition(int[] position) {
@@ -86,18 +101,25 @@ public class GameManager {
                     // Уведомляем подписчиков об успешном попадании
                     GameManager.getInstance().notifyListeners(position, true);
 
-                    // Проверяем, уничтожен ли корабль
-                    boolean shipDestroyed = true;
-                    for (int[] pos : shipPositions) {
-                        if (!hited.contains(pos)) {
-                            shipDestroyed = false;
-                            break;
-                        }
-                    }
+                 // Проверяем, уничтожен ли корабль
+	                boolean shipDestroyed = true;
+	                for (int[] pos : shipPositions) {
+	                    boolean found = false;
+	                    for (int[] hit : hited) {
+	                        if (Arrays.equals(hit, pos)) {
+	                            found = true;
+	                            break;
+	                        }
+	                    }
+	                    if (!found) {
+	                        shipDestroyed = false;
+	                        break;
+	                    }
+	                }
 
                     // Если корабль уничтожен
                     if (shipDestroyed) {
-                        System.out.println("SHIP DESTROYED");
+                        System.out.println("PLAYER SHIP DESTROYED");
 
                         // Получаем дополнительные данные о корабле
                         boolean isHorizontal = shipsIsHorizontalCurrent.get(shipId);
@@ -126,5 +148,9 @@ public class GameManager {
 
     public static void giveTurn() {
         isTurn = true;
+    }
+    
+    public static void setTurn(boolean i) {
+        isTurn = i;
     }
 }

@@ -55,14 +55,9 @@ public class AnimatedButton extends JButton {
 
         setPreferredSize(new Dimension(originalWidth, originalHeight));
         
-     // Загрузка шрифта TTF
-        try {
-            customFont = Font.createFont(Font.TRUETYPE_FONT, ResourceLoader.loadAsURL("/fonts/RussoOne-Regular.ttf").openStream()).deriveFont(24f); //размер шрифта
-            bigCustomFont = customFont.deriveFont(26f);
-            setFont(customFont); // Применение шрифта к кнопке
-        } catch (FontFormatException | IOException e) {
-            e.printStackTrace();
-        }
+        customFont = GameWindow.customFont.deriveFont(24f); //размер шрифта
+		bigCustomFont = GameWindow.customFont.deriveFont(26f);
+		setFont(customFont); // Применение шрифта к кнопке
 
         addMouseListener(new MouseAdapter() {
             @Override

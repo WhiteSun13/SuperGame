@@ -1,6 +1,9 @@
 package com.SuperGame;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -10,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import com.SuperGame.Scenes.StartMenuPanel;
+import com.SuperGame.Utils.ResourceLoader;
 import com.SuperGame.Utils.SceneManager;
 import com.SuperGame.Utils.SoundManager;
 
@@ -17,6 +21,7 @@ import com.SuperGame.Utils.SoundManager;
 public class GameWindow extends JFrame {
 
     JPanel panel;
+    public static Font customFont;
 
     public GameWindow() {
         setTitle("Warships Battle");
@@ -42,8 +47,6 @@ public class GameWindow extends JFrame {
         JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(e -> System.exit(0));
         fileMenu.add(exitItem);
-
-        SoundManager.playMusic("/music/StartMenuMusic.wav", true);
         
         // Инициализация SceneManager с текущим окном
         SceneManager.initialize(this);
@@ -63,6 +66,15 @@ public class GameWindow extends JFrame {
     }
 
     public static void main(String[] args) {
+    	// Загружаем шрифт из пакета
+	    try {
+	        // Убедись, что путь к файлу корректный
+	        customFont = Font.createFont(Font.TRUETYPE_FONT, ResourceLoader.loadAsURL("/fonts/RussoOne-Regular.ttf").openStream());
+	    } catch (FontFormatException | IOException e) {
+	        e.printStackTrace();
+	    }
+
+    	
         GameWindow window = new GameWindow();
         window.setVisible(true);
     }
