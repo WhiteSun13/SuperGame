@@ -23,11 +23,7 @@ public class WaitEnemy extends JPanel implements ActionListener {
         Timer tim = new Timer(50, this);
         tim.start();
         
-        if (GameManager.isServer) {
-			Server.send(new MessageWrapper("enemyReady", null));
-		} else {
-			Client.send(new MessageWrapper("enemyReady", null));
-		}
+        ClientManager.send(new MessageWrapper("enemyReady", null));
 
         backgroundImage = ResourceLoader.loadImageAsURL("/images/Ocean.png");
         

@@ -1,11 +1,10 @@
 package com.SuperGame.Scenes;
 
 import com.SuperGame.AnimatedButton;
-import com.SuperGame.Client;
+import com.SuperGame.ClientManager;
 import com.SuperGame.GameManager;
 import com.SuperGame.GameWindow;
 import com.SuperGame.MessageWrapper;
-import com.SuperGame.Server;
 import com.SuperGame.Objects.AI;
 import com.SuperGame.Objects.FieldPlay;
 import com.SuperGame.Utils.ResourceLoader;
@@ -29,6 +28,8 @@ import javax.swing.Timer;
 
 public class InGamePanel extends JPanel implements ActionListener, MouseListener, MouseMotionListener  {
 	private Image backgroundImage;
+	JButton save_btn;
+	JButton load_btn;
 	
 	private boolean isGameOver;
 	private AI ai;
@@ -48,7 +49,11 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    SoundManager.playMusic("/music/Sea.wav", true);
 	    
 	    enemyField = new FieldPlay(30, 30, false);
-	    playerField = new FieldPlay(686, 30, true, 1);
+	    if (GameManager.playWithAI) {
+	    	playerField = new FieldPlay(686, 30, true, 1);
+	    } else {
+	    	playerField = new FieldPlay(686, 30, true, 0.75);	    	
+	    }
 	    GameManager.addGameEventListener(playerField);
 	    
 	    if (GameManager.isServer) {
@@ -57,9 +62,31 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    	GameManager.setTurn(false);
 	    }
 	    
+	    save_btn = new AnimatedButton("Сохранить", 686, 560, 300, 100);
+	    save_btn.addActionListener(e -> {
+	    	if (GameManager.playWithAI) {
+	    		SceneManager.loadScene(new SetGamePanel());	    		
+	    	} else {
+	    		SceneManager.loadScene(new WaitEnemy(new SetGamePanel()));
+	    	}
+	    });
+	    add(save_btn);
+	    
+	    load_btn = new AnimatedButton("Загрузить", 996, 560, 300, 100);
+	    load_btn.addActionListener(e -> {
+	    	if (GameManager.playWithAI) {
+	    		SceneManager.loadScene(new SetGamePanel());	    		
+	    	} else {
+	    		SceneManager.loadScene(new WaitEnemy(new SetGamePanel()));
+	    	}
+	    });
+	    add(load_btn);
+	    
 	    if (GameManager.playWithAI) {
 	    	ai = new AI();
-	    }
+	    	save_btn.setVisible(false);
+	    	load_btn.setVisible(false);
+	    } 
 	    
 	    setLayout(null);
 	    
@@ -93,6 +120,9 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    
 	    GameManager.setTurn(false);
 	    isGameOver = true;
+	    
+	    save_btn.setVisible(false);
+    	load_btn.setVisible(false);
 
 	    JLabel resultLabel = new JLabel();
 	    resultLabel.setForeground(Color.WHITE);
@@ -102,9 +132,11 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    if (isWin) {
 	        resultLabel.setText("Победа!");
 	        resultLabel.setBounds(586, 200, 400, 100);
+	        ClientManager.incrementWins();
 	    } else {
 	        resultLabel.setText("Поражение!");
 	        resultLabel.setBounds(550, 200, 400, 100);
+	        ClientManager.incrementLoses();
 	    }
 
 	    add(resultLabel);
@@ -123,6 +155,7 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    exitToMainMenu_btn.addActionListener(e -> {
 	        GameManager.setTurn(false);
 	        SceneManager.loadScene(new StartMenuPanel());
+	        ClientManager.stopClient();
 	    });
 	    add(exitToMainMenu_btn);
 	}
@@ -140,11 +173,7 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 			if (GameManager.playWithAI) {
 				ai.giveTurn();
 			} else {
-				if (GameManager.isServer) {
-					Server.send(new MessageWrapper("giveTurn", null));
-				} else {
-					Client.send(new MessageWrapper("giveTurn", null));
-				}
+				ClientManager.send(new MessageWrapper("giveTurn", null));
 			}
 		}
 	}
@@ -177,11 +206,7 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 				setPositionInfo(positionInfo);
 				
 			} else {
-				if (GameManager.isServer) {
-					Server.send(new MessageWrapper("intArray", tilePos));
-				} else {
-					Client.send(new MessageWrapper("intArray", tilePos));
-				}
+				ClientManager.send(new MessageWrapper("intArray", tilePos));
 			}
 			
 			System.out.println(enemyField.getSunkShips().size());

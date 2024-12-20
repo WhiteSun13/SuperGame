@@ -6,6 +6,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 
 import com.SuperGame.Utils.ResourceLoader;
+import com.SuperGame.Utils.Settings;
 
 public class Ship {
     private int id; // id Корабля
@@ -22,10 +23,10 @@ public class Ship {
 
     // Основной конструктор
     public Ship(int x, int y, int id) {
-        this.x = x;
-        this.y = y;
-        init_x = x;
-        init_y = y;
+        this.x = (int) (x * Settings.scale);
+        this.y = (int) (y * Settings.scale);
+        init_x = (int) (x * Settings.scale);
+        init_y = (int) (y * Settings.scale);
         
         this.id = id;
         
@@ -112,7 +113,8 @@ public class Ship {
     }
 
     public void draw(Graphics g) {
-        // Отрисовка изображения с учетом поворота и масштаба
+//        // Отрисовка изображения с учетом поворота и масштаба
+//        setScale(Settings.scale);
         g.drawImage(getRotatedImage(), x, y, w, h, null);
     }
 

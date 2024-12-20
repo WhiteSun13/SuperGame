@@ -6,11 +6,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.SuperGame.Scenes.InGamePanel;
+import com.SuperGame.Scenes.MultiplayerMenuPanel;
+import com.SuperGame.Utils.SceneManager;
 
 public class GameManager {
     private static GameManager instance;
     public static boolean isEnemyReady = false;
     public static boolean isServer = false;
+    public static boolean isAuthorizated = false;
     public static boolean playWithAI = false;
 
     public static Map<Integer, int[][]> shipsPosCurrent = new HashMap<>();
@@ -18,12 +21,12 @@ public class GameManager {
     public static Map<Integer, int[]> shipsImagesPosCurrent = new HashMap<>();
 
     public static boolean isTurn = false;
-    public static ArrayList<int[]> missed = new ArrayList<int[]>();
-    public static ArrayList<int[]> hited = new ArrayList<int[]>();
+    public static ArrayList<int[]> missed = new ArrayList<>();
+    public static ArrayList<int[]> hited = new ArrayList<>();
     public static InGamePanel GamePanel;
     
     // Список слушателей событий
-    private static ArrayList<GameEventListener> listeners = new ArrayList<>();
+    private static final ArrayList<GameEventListener> listeners = new ArrayList<>();
 
     private GameManager() {
     }
@@ -44,10 +47,10 @@ public class GameManager {
     public enum TileState {
         EMPTY,		// пустой
         MISS,		// мимо
-        HIT,		// попал
+        HIT,		                 // попал
         DEAD,		// убил
         ALLOW,		// можно разместить корабль (перед игрой)
-    	SHIP_SET,	// занят / установлен корабль
+        SHIP_SET,	                  // занят / установлен корабль
         BLOCK, 		// нельзя ставить корабль (перед игрой)
         HOVER 		// выбрана клетка (во время игры)
     }
@@ -70,8 +73,8 @@ public class GameManager {
     }
     
     public static void newGame() {
-    	missed = new ArrayList<int[]>();
-        hited = new ArrayList<int[]>();
+        missed = new ArrayList<>();
+        hited = new ArrayList<>();
     }
     
     public static Object[] checkPosition(int[] position) {
@@ -152,5 +155,10 @@ public class GameManager {
     
     public static void setTurn(boolean i) {
         isTurn = i;
+    }
+    
+    public static void setAuthorizated(boolean i) {
+    	isAuthorizated = i;
+    	if (i) SceneManager.loadScene(new MultiplayerMenuPanel());
     }
 }
