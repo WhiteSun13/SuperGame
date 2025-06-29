@@ -1,11 +1,16 @@
 package com.SuperGame.Utils;
 
 import javax.swing.JPanel;
+
+import com.SuperGame.Objects.FieldPlay;
+import com.SuperGame.Scenes.InGamePanel;
+
 import javax.swing.JFrame;
 
 public class SceneManager {
     
     private static JFrame window;
+    private static JPanel currentPanel;
 
     // Установка основного окна игры
     public static void initialize(JFrame mainWindow) {
@@ -20,6 +25,7 @@ public class SceneManager {
             
             // Добавляем новую сцену
             window.add(newPanel);
+            currentPanel = newPanel;
             
             // Перерисовываем окно
             window.revalidate();
@@ -27,5 +33,10 @@ public class SceneManager {
         } else {
             System.out.println("Ошибка: Окно не инициализировано.");
         }
+    }
+    
+    public static FieldPlay[] getPlayerData() {
+    	InGamePanel gp = (InGamePanel) currentPanel;
+    	return gp.getFields();
     }
 }

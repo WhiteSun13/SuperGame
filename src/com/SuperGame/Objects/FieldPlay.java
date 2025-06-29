@@ -2,13 +2,16 @@ package com.SuperGame.Objects;
 
 import java.util.*;
 import java.awt.Graphics;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import com.SuperGame.GameEventListener;
 import com.SuperGame.GameManager.TileState;
 import com.SuperGame.Utils.SoundManager;
 
-public class FieldPlay extends Field implements GameEventListener {
+public class FieldPlay extends Field implements GameEventListener, Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	private Ship[] ships = new Ship[10]; // Корабли
 	private ArrayList<Ship> enemyShips = new ArrayList<>(); // Корабли для вражеского поля
 	private Tile selectedTile = null;
@@ -29,7 +32,7 @@ public class FieldPlay extends Field implements GameEventListener {
 		
 		if (isPlayer) {
 			loadField();
-		
+			
 			// Инициализация кораблей
 			for (int i = 0; i < 10; i++) {
 				int[] importTile = shipsImagesPos.get(i+1);

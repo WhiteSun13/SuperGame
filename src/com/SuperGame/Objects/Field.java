@@ -1,13 +1,16 @@
 package com.SuperGame.Objects;
 
 import java.awt.Graphics;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.SuperGame.GameManager;
 
-public class Field {
-    public Tile[][] tiles = new Tile[10][10];
+public class Field implements Serializable{
+	private static final long serialVersionUID = 1L;
+	
+	public Tile[][] tiles = new Tile[10][10];
     protected int x, y;
     protected double scale = 1;
     

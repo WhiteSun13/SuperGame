@@ -4,32 +4,37 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import com.SuperGame.Utils.ResourceLoader;
-import com.SuperGame.Utils.Settings;
 
-public class Ship {
-    private int id; // id Корабля
-    private int x, y, type; // x y и размер корабля
-    private int temp_x, temp_y; // Предыдущее положение
-    private int init_x, init_y; // Начальное положение 
-    private int w, h; // ширина и высота
-    private boolean ishorizontal = true; // Находится ли сейчас корабль в горизонтальном положении
-    private Image image;
-    private int rotationAngle; // Угол поворота в градусах
-    private double scale = 1.0; // Масштаб по умолчанию
-    
+public class Ship implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private int id;
+    private int x, y, type;
+    private int temp_x, temp_y;
+    private int init_x, init_y;
+    private int w, h;
+    private boolean ishorizontal = true;
+    private transient Image image;
+    private String imagePath;
+    private int rotationAngle;
+    private double scale = 1.0;
+
     public boolean seted = false;
 
-    // Основной конструктор
     public Ship(int x, int y, int id) {
-        this.x = (int) (x * Settings.scale);
-        this.y = (int) (y * Settings.scale);
-        init_x = (int) (x * Settings.scale);
-        init_y = (int) (y * Settings.scale);
-        
+        this.x = x;
+        this.y = y;
+        init_x = x;
+        init_y = y;
+
         this.id = id;
-        
+
         if (id == 10) {
             this.type = 4;
         } else if (id >= 8) {
@@ -39,28 +44,29 @@ public class Ship {
         } else {
             this.type = 1;
         }
-        
-        // Загрузка изображения
-        image = ResourceLoader.loadImageAsURL(String.format("/images/ships/ship%s.png", type));
-        rotationAngle = 0; // Начальный угол
-        
+
+        this.imagePath = String.format("/images/ships/ship%s.png", type);
+        loadImage();
+        rotationAngle = 0;
+
         this.w = image.getWidth(null);
         this.h = image.getHeight(null);
     }
-    
-    // Перегруженный конструктор с параметром масштаба
+
     public Ship(int x, int y, int id, double scale) {
-        this(x, y, id); // Вызов основного конструктора
-        setScale(scale); // Установка масштаба
+        this(x, y, id);
+        setScale(scale);
     }
-    
-    // Установка масштаба
+
+    private void loadImage() {
+        image = ResourceLoader.loadImageAsURL(imagePath);
+    }
+
     public void setScale(double scale) {
         this.scale = scale;
         updateDimensions();
     }
 
-    // Обновление размеров с учётом масштаба и ориентации
     private void updateDimensions() {
         if (ishorizontal) {
             this.w = (int) (image.getWidth(null) * scale);
@@ -71,18 +77,16 @@ public class Ship {
         }
     }
 
-    // Метод для замены изображения корабля
     public void setImage() {
-        this.image = ResourceLoader.loadImageAsURL(String.format("/images/ships/shipDead%s.png", type));
-        updateDimensions(); // Обновляем размеры с учётом нового изображения и масштаба
+        this.imagePath = String.format("/images/ships/shipDead%s.png", type);
+        loadImage();
+        updateDimensions();
     }
 
-    // Узнать номер корабля
     public int getID() {
         return id;
     }
 
-    // Узнать тип корабля
     public int getType() {
         return type;
     }
@@ -99,6 +103,14 @@ public class Ship {
         return y;
     }
 
+    public int getWidth() {
+    	return w;
+    }
+    
+    public int getHeight() {
+    	return h;
+    }
+
     public void resetPos() {
         x = init_x;
         y = init_y;
@@ -113,14 +125,12 @@ public class Ship {
     }
 
     public void draw(Graphics g) {
-//        // Отрисовка изображения с учетом поворота и масштаба
-//        setScale(Settings.scale);
         g.drawImage(getRotatedImage(), x, y, w, h, null);
     }
 
-    public void setPosition(int x, int y) {       
-        this.x = x - (ishorizontal ? 0 + h / 2 : w / 2); // Центрирование для горизонтального
-        this.y = y - (ishorizontal ? h / 2 : h - w / 2); // Центрирование для вертикального
+    public void setPosition(int x, int y) {
+        this.x = x - (ishorizontal ? 0 + h / 2 : w / 2);
+        this.y = y - (ishorizontal ? h / 2 : h - w / 2);
     }
 
     public void savePosition() {
@@ -151,6 +161,11 @@ public class Ship {
     }
 
     private Image getRotatedImage() {
+    	if (image == null) { // Handle the case where image loading failed
+            return new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB); // Return a dummy image
+        }
+
+
         int width = image.getWidth(null);
         int height = image.getHeight(null);
 
@@ -161,9 +176,20 @@ public class Ship {
         Graphics2D g2d = (Graphics2D) rotatedImage.getGraphics();
 
         g2d.rotate(Math.toRadians(rotationAngle), newWidth / 2.0, newHeight / 2.0);
-        g2d.drawImage(image, (newWidth - width) / 2, (newHeight - height) / 2, (int) (width), (int) (height), null);
+        g2d.drawImage(image, (newWidth - width) / 2, (newHeight - height) / 2, (int) (width), (int) (height) , null);
+        
         g2d.dispose();
 
         return rotatedImage;
+    }
+
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        loadImage();
     }
 }

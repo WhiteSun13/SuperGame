@@ -2,54 +2,59 @@ package com.SuperGame.Objects;
 
 import java.awt.Graphics;
 import java.awt.Image;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import com.SuperGame.GameManager.TileState;
 import com.SuperGame.Utils.ResourceLoader;
 
-public class Tile {
+public class Tile implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int i, j;
     private int x, y;
-    private Image image;
-    private double scale;  // Добавлено поле для масштаба
+    private transient Image image; 
+    private double scale;
+    private String imagePath;
 
     public int shipId = 0;
     public TileState status = TileState.EMPTY;
 
-    // Конструктор по умолчанию с масштабом 1.0 (без изменений размера)
     public Tile(int i, int j, int xOffset, int yOffset) {
-        this(i, j, xOffset, yOffset, 1.0);  // Вызов перегруженного конструктора с масштабом 1.0
+        this(i, j, xOffset, yOffset, 1.0);
     }
 
-    // Перегруженный конструктор с параметром масштаба
     public Tile(int i, int j, int xOffset, int yOffset, double scale) {
         this.i = i;
         this.j = j;
         this.scale = scale;
+        this.imagePath = "/images/tiles/tile_empty.png";
+        loadImage();
 
-        // Загрузка изображения
-        image = ResourceLoader.loadImageAsURL("/images/tiles/tile_empty.png");
-
-        // Применение смещения и расчет координат
-        x = i * (int)(image.getWidth(null) * scale) + xOffset;
-        y = j * (int)(image.getHeight(null) * scale) + yOffset;
+        x = i * (int) (image.getWidth(null) * scale) + xOffset;
+        y = j * (int) (image.getHeight(null) * scale) + yOffset;
     }
 
-    public void draw(Graphics g) {
-        // Отрисовка изображения с учетом масштаба
-        int scaledWidth = (int)(image.getWidth(null) * scale);
-        int scaledHeight = (int)(image.getHeight(null) * scale);
-        g.drawImage(image, x, y, scaledWidth, scaledHeight, null);
-    }
-
-    // Метод для замены изображения
-    public void setImage(String imagePath) {
+    private void loadImage() {
         image = ResourceLoader.loadImageAsURL(imagePath);
     }
 
-    // Находится ли что-то (например, мышь) с координатами (mx, my) на объекте 
+    public void draw(Graphics g) {
+        int scaledWidth = (int) (image.getWidth(null) * scale);
+        int scaledHeight = (int) (image.getHeight(null) * scale);
+        g.drawImage(image, x, y, scaledWidth, scaledHeight, null);
+    }
+
+    public void setImage(String imagePath) {
+        this.imagePath = imagePath;
+        loadImage();
+    }
+
     public boolean contains(int mx, int my) {
-        return (mx >= x && mx <= x + (int)(image.getWidth(null) * scale)) && 
-               (my >= y && my <= y + (int)(image.getHeight(null) * scale));
+        return (mx >= x && mx <= x + (int) (image.getWidth(null) * scale)) &&
+                (my >= y && my <= y + (int) (image.getHeight(null) * scale));
     }
 
     public void getInfo() {
@@ -72,14 +77,37 @@ public class Tile {
         return y;
     }
 
-    public double getScale() {
-        return scale;
+
+	public double getScale() {
+		return scale;
+	}
+
+
+	public String getImagePath() {
+		return imagePath;
+	}
+
+
+	public Image getImage() {
+		return image;
+	}
+
+
+	public int getShipId() {
+		return shipId;
+	}
+
+
+	public TileState getStatus() {
+		return status;
+	}
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
     }
 
-//    public void setScale(double scale) {
-//        this.scale = scale;
-//        // Обновление координат x и y при изменении масштаба
-//        x = i * (int)(image.getWidth(null) * scale) + xOffset;
-//        y = j * (int)(image.getHeight(null) * scale) + yOffset;
-//    }
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        loadImage();
+    }
 }

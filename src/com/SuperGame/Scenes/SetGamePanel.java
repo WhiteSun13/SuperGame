@@ -45,7 +45,7 @@ public class SetGamePanel extends JPanel implements KeyListener, ActionListener,
         SoundManager.playMusic("/music/q.wav", true);
         backgroundImage = ResourceLoader.loadImageAsURL("/images/Ocean.png");
         
-     // Инициализация кнопки "Сброс"
+     // Инициализация кнопки "Cлучайно"
         JButton random_btn = new AnimatedButton("Cлучайно", 1089, 240, 245, 100);
         
         random_btn.addActionListener(new ActionListener() {

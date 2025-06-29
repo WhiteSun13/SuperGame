@@ -1,4 +1,3 @@
-// File: com/SuperGame/ServerManager.java
 package com.SuperGame;
 
 import java.io.*;
@@ -8,6 +7,10 @@ import java.net.*;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+import com.SuperGame.Objects.FieldPlay;
 
 public class ServerManager {
 
@@ -28,6 +31,11 @@ public class ServerManager {
 
             serverSocket = new ServerSocket(PORT);
             System.out.println("Сервер запущен на порту: " + PORT);
+            try {
+    			System.out.println("IP-Адрес: " + InetAddress.getLocalHost().getHostAddress());
+    		} catch (UnknownHostException e1) {
+    			e1.printStackTrace();
+    		}
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -61,7 +69,18 @@ public class ServerManager {
             statement.execute("CREATE TABLE IF NOT EXISTS saved_games ("
                     + "id INT AUTO_INCREMENT PRIMARY KEY,"
                     + "hostname VARCHAR(50) NOT NULL,"
-                    + "clientname VARCHAR(50) NOT NULL"
+                    + "clientname VARCHAR(50) DEFAULT NULL,"
+                    + "host_field_player BLOB DEFAULT NULL,"
+                    + "host_field_enemy BLOB DEFAULT NULL,"
+                    + "client_field_player BLOB DEFAULT NULL,"
+                    + "client_field_enemy BLOB DEFAULT NULL,"
+                    + "host_missed BLOB DEFAULT NULL,"
+                    + "host_hited BLOB DEFAULT NULL,"
+                    + "client_missed BLOB DEFAULT NULL,"
+                    + "client_hited BLOB DEFAULT NULL,"
+                    + "save_date VARCHAR(50) NOT NULL,"
+                    + "save_name VARCHAR(50) DEFAULT NULL,"
+                    + "host_turn BOOLEAN DEFAULT TRUE"
                     + ")");
             System.out.println("База данных инициализирована.");
         } catch (SQLException e) {
@@ -114,7 +133,7 @@ public class ServerManager {
             }
         }
 
-        private void handleClientMessage(MessageWrapper message) {
+        private void handleClientMessage(MessageWrapper message) throws ClassNotFoundException {
             try {
                 switch (message.getType()) {
                     case "registerClient":
@@ -140,6 +159,15 @@ public class ServerManager {
                         break;
                     case "listAvailableGames":
                         sendAvailableGames();
+                        break;
+                    case "listSavedGames":
+                        sendSavedGames((boolean) message.getPayload());
+                        break;
+                    case "saveGame":
+                        saveGame((Object[]) message.getPayload());
+                        break;
+                    case "loadGame":
+                    	loadGame((int) message.getPayload());
                         break;
                     case "sendMessage":
                         handleGameMessage((String) message.getPayload());
@@ -328,6 +356,9 @@ public class ServerManager {
 
             ClientHandler hostHandler = activeGames.get(hostId);
             System.out.println("Игра найдена. Устанавливается соединение с хостом: " + hostId);
+            hostHandler.out.writeObject(new MessageWrapper("gameMessage", clientId + " подключился!"));
+            
+            this.hostId = hostId;
 
             // Сообщить хосту о подключении клиента
             out.writeObject(new MessageWrapper("clientConnected", clientId));
@@ -360,21 +391,6 @@ public class ServerManager {
                 }
             }
             out.writeObject(new MessageWrapper("availableGames", availableGames));
-        }
-        
-        private void saveGame(Object[] payload) throws IOException, SQLException {
-        	try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-                PreparedStatement statement = connection.prepareStatement(
-                        "SELECT host FROM games WHERE connected_client IS NULL");
-                ResultSet resultSet = statement.executeQuery();
-            }
-        	
-        	// Если игрок - хост
-        	if ((boolean) payload[0]) {
-        		
-        	} else {
-        		
-        	}
         }
         
         private void incrementWins(String username) throws SQLException {
@@ -451,5 +467,136 @@ public class ServerManager {
                 System.out.println("Ошибка при отключении клиента: " + e.getMessage());
             }
         }
+        
+        private void sendSavedGames(boolean isHost) throws SQLException, IOException {
+            List<Map<String, Object>> savedGames = new ArrayList<>(); // Список для хранения информации о сохраненных играх
+            String[] parts = clientId.split("@");
+
+            try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            	PreparedStatement statement;
+            	if (isHost) {
+            		statement = connection.prepareStatement(
+                            "SELECT id, hostname, clientname, save_date, save_name FROM saved_games WHERE hostname = ?"); // Запрос на выборку сохраненных игр для текущего пользователя
+                    statement.setString(1, parts[0]);
+            	}
+            	else {
+            		statement = connection.prepareStatement(
+                            "SELECT id, hostname, clientname, save_date, save_name FROM saved_games WHERE clientname = ?"); // Запрос на выборку сохраненных игр для текущего пользователя
+                    statement.setString(1, parts[0]);
+            	}
+                
+                ResultSet resultSet = statement.executeQuery();
+
+                while (resultSet.next()) {
+                    Map<String, Object> gameInfo = new HashMap<>(); // Map для хранения информации об одной игре
+                    gameInfo.put("id", resultSet.getInt("id"));
+                    gameInfo.put("hostname", resultSet.getString("hostname"));
+                    gameInfo.put("clientname", resultSet.getString("clientname"));
+                    gameInfo.put("save_date", resultSet.getString("save_date"));
+                    gameInfo.put("save_name", resultSet.getString("save_name"));
+                    savedGames.add(gameInfo);
+                }
+            }
+
+            out.writeObject(new MessageWrapper("savedGames", savedGames)); // Отправка списка сохраненных игр клиенту
+        }
+        
+        private void saveGame(Object[] payload) throws IOException, SQLException {
+            String hostname = (String) payload[0];
+            String clientname = (String) payload[1];
+            FieldPlay hostFieldPlayer = (FieldPlay) payload[2];
+            FieldPlay hostFieldEnemy = (FieldPlay) payload[3];
+            FieldPlay clientFieldPlayer = (FieldPlay) payload[4];
+            FieldPlay clientFieldEnemy = (FieldPlay) payload[5];
+            ArrayList<int[]> hostMissed = (ArrayList<int[]>) payload[6];
+            ArrayList<int[]> hostHited = (ArrayList<int[]>) payload[7];
+            ArrayList<int[]> clientMissed = (ArrayList<int[]>) payload[8];
+            ArrayList<int[]> clientHited = (ArrayList<int[]>) payload[9];
+            String savename = (String) payload[10];
+            boolean isHostTurn = (boolean) payload[11];
+            
+            
+            // Добавляем дату и время сохранения
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedDateTime = now.format(formatter);
+
+
+            try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO saved_games (hostname, clientname, host_field_player, host_field_enemy, client_field_player, client_field_enemy, host_missed, host_hited, client_missed, client_hited, save_date, save_name, host_turn) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+                statement.setString(1, hostname);
+                statement.setString(2, clientname);
+                statement.setBytes(3, serialize(hostFieldPlayer));
+                statement.setBytes(4, serialize(hostFieldEnemy));
+                statement.setBytes(5, serialize(clientFieldPlayer));
+                statement.setBytes(6, serialize(clientFieldEnemy));
+                statement.setBytes(7, serialize(hostMissed));
+                statement.setBytes(8, serialize(hostHited));
+                statement.setBytes(9, serialize(clientMissed));
+                statement.setBytes(10, serialize(clientHited));
+                statement.setString(11, formattedDateTime);
+                statement.setString(12, savename);
+                statement.setBoolean(13, isHostTurn);
+                
+                statement.executeUpdate();
+                System.out.println("Игра сохранена в базе данных.");
+                out.writeObject(new MessageWrapper("gameMessage", "Игра сохранена!"));
+           }
+        }
+        
+    private void loadGame(int id) throws IOException, SQLException, ClassNotFoundException {
+    	FieldPlay hostFieldPlayer = null;
+    	FieldPlay hostFieldEnemy = null;
+    	FieldPlay clientFieldPlayer = null;
+    	FieldPlay clientFieldEnemy = null;
+    	ArrayList<int[]> hostMissed = null;
+        ArrayList<int[]> hostHited = null;
+        ArrayList<int[]> clientMissed = null;
+        ArrayList<int[]> clientHited = null;
+        boolean isHostTurn;
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            PreparedStatement statement = connection.prepareStatement(
+                    "SELECT hostname, clientname, host_field_player, host_field_enemy, client_field_player, client_field_enemy, host_missed, host_hited, client_missed, client_hited, host_turn FROM saved_games WHERE id = ?");
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+            	hostFieldPlayer = (FieldPlay) deserialize(resultSet.getBytes("host_field_player"));
+            	hostFieldEnemy = (FieldPlay) deserialize(resultSet.getBytes("host_field_enemy"));
+                clientFieldPlayer = (FieldPlay) deserialize(resultSet.getBytes("client_field_player"));
+                clientFieldEnemy = (FieldPlay) deserialize(resultSet.getBytes("client_field_enemy"));
+                hostMissed = (ArrayList<int[]>) deserialize(resultSet.getBytes("host_missed"));
+                hostHited = (ArrayList<int[]>) deserialize(resultSet.getBytes("host_hited"));
+                clientMissed = (ArrayList<int[]>) deserialize(resultSet.getBytes("client_missed"));
+                clientHited = (ArrayList<int[]>) deserialize(resultSet.getBytes("client_hited"));
+                isHostTurn = resultSet.getBoolean("host_turn");
+
+                System.out.println("Игра загружена из базы данных.");
+                out.writeObject(new MessageWrapper("gameLoaded", new Object[]{hostFieldPlayer, hostFieldEnemy, clientFieldPlayer, clientFieldEnemy, hostMissed, hostHited, clientMissed, clientHited, isHostTurn}));
+
+            } else {
+                System.out.println("Сохраненная игра не найдена для хоста: " + id);
+                out.writeObject(new MessageWrapper("error", "Сохраненная игра не найдена."));
+            }
+        }
+    }
+
+
+    private byte[] serialize(Object obj) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(obj);
+        oos.flush();
+        return bos.toByteArray();
+    }
+
+    private Object deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        ObjectInputStream ois = new ObjectInputStream(bis);
+        return ois.readObject();
+    }
     }
 }

@@ -13,6 +13,7 @@ import com.SuperGame.Utils.SoundManager;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,7 +23,9 @@ import java.awt.event.MouseMotionListener;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.Timer;
 
 
@@ -63,22 +66,12 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    }
 	    
 	    save_btn = new AnimatedButton("Сохранить", 686, 560, 300, 100);
-	    save_btn.addActionListener(e -> {
-	    	if (GameManager.playWithAI) {
-	    		SceneManager.loadScene(new SetGamePanel());	    		
-	    	} else {
-	    		SceneManager.loadScene(new WaitEnemy(new SetGamePanel()));
-	    	}
-	    });
+	    save_btn.addActionListener(e -> { saveBtnAction(); });
 	    add(save_btn);
 	    
 	    load_btn = new AnimatedButton("Загрузить", 996, 560, 300, 100);
 	    load_btn.addActionListener(e -> {
-	    	if (GameManager.playWithAI) {
-	    		SceneManager.loadScene(new SetGamePanel());	    		
-	    	} else {
-	    		SceneManager.loadScene(new WaitEnemy(new SetGamePanel()));
-	    	}
+	    	ClientManager.listSavedGames();
 	    });
 	    add(load_btn);
 	    
@@ -87,6 +80,78 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    	save_btn.setVisible(false);
 	    	load_btn.setVisible(false);
 	    } 
+	    
+	    setLayout(null);
+	    
+	    // Добавление фокуса
+	    setFocusable(true);
+	    requestFocusInWindow();  // Запросить фокус
+	    
+	    // Добавление обработчиков мыши
+	    addMouseListener(this);
+	    addMouseMotionListener(this); // Добавить слушатель движения мыши
+	}
+
+	private void saveBtnAction() {
+		// Создаем диалоговое окно для ввода имени сохранения
+		JTextField saveNameField = new JTextField(20);
+		JPanel panel = new JPanel(new GridLayout(0, 1));
+		panel.add(new JLabel("Введите имя сохранения:"));
+		panel.add(saveNameField);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Сохранить игру", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		// Если пользователь нажал "OK"
+		if (result == JOptionPane.OK_OPTION) {
+		    String saveName = saveNameField.getText();
+
+		    // Проверяем, введено ли имя сохранения
+		    if (saveName.isEmpty()) {
+		        JOptionPane.showMessageDialog(null, "Введите имя сохранения!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+		        return; // Прерываем выполнение, если имя не введено
+		    }
+
+		    // Отправляем команду сохранения
+		        try {
+		            ClientManager.send(new MessageWrapper("saveRequest", new Object[]{ClientManager.username, playerField, enemyField, GameManager.missed, GameManager.hited, saveName}));
+		            JOptionPane.showMessageDialog(null, "Игра успешно сохранена!", "Успех", JOptionPane.INFORMATION_MESSAGE);
+		        }
+		        catch (Exception ex){
+		            JOptionPane.showMessageDialog(null, "Ошибка при сохранении", "Ошибка", JOptionPane.ERROR_MESSAGE);
+		        }
+		}
+		
+		requestFocusInWindow();
+	}
+	
+	public InGamePanel(FieldPlay loadedPlayerField, FieldPlay loadedEnemyField, boolean loadedHostTurn) {
+		GameManager.GamePanel = this;
+	    Timer tim = new Timer(16, (ActionListener) this);
+	    tim.start();
+	    
+	    setBackground(new Color(0, 0, 50));
+	    backgroundImage = ResourceLoader.loadImageAsURL("/images/Ocean.png");
+	    SoundManager.playMusic("/music/Sea.wav", true);
+	    
+	    enemyField = loadedEnemyField;
+	    playerField = loadedPlayerField;
+	    GameManager.addGameEventListener(playerField);
+	    
+	    if (GameManager.isServer) {
+	    	GameManager.setTurn(loadedHostTurn);
+	    } else {
+	    	GameManager.setTurn(!loadedHostTurn);
+	    }
+	    
+	    save_btn = new AnimatedButton("Сохранить", 686, 560, 300, 100);
+	    save_btn.addActionListener(e -> { saveBtnAction(); });
+	    add(save_btn);
+	    
+	    load_btn = new AnimatedButton("Загрузить", 996, 560, 300, 100);
+	    load_btn.addActionListener(e -> {
+	    	ClientManager.listSavedGames();
+	    });
+	    add(load_btn);
 	    
 	    setLayout(null);
 	    
@@ -132,11 +197,11 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	    if (isWin) {
 	        resultLabel.setText("Победа!");
 	        resultLabel.setBounds(586, 200, 400, 100);
-	        ClientManager.incrementWins();
+	        if (!GameManager.playWithAI) ClientManager.incrementWins();
 	    } else {
 	        resultLabel.setText("Поражение!");
 	        resultLabel.setBounds(550, 200, 400, 100);
-	        ClientManager.incrementLoses();
+	        if (!GameManager.playWithAI) ClientManager.incrementLoses();
 	    }
 
 	    add(resultLabel);
@@ -234,10 +299,16 @@ public class InGamePanel extends JPanel implements ActionListener, MouseListener
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		repaint();
-		if (playerField.getSunkShips().size() == 10) {
-			endGame(false);
-		} else if (enemyField.getSunkShips().size() == 10) {
-			endGame(true);
+		if (playerField != null) {
+			if (playerField.getSunkShips().size() == 10) {
+				endGame(false);
+			} else if (enemyField.getSunkShips().size() == 10) {
+				endGame(true);
+			}
 		}
+	}
+	
+	public FieldPlay[] getFields() {
+		return new FieldPlay[] {playerField, enemyField};
 	}
 }
